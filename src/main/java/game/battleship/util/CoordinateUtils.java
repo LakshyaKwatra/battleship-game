@@ -32,6 +32,7 @@ public class CoordinateUtils {
     public static Set<Coordinate> getOpponentZoneCoordinates(Player shooter, List<Player> allPlayers) {
         return allPlayers.stream()
                 .filter(p -> !p.getId().equals(shooter.getId()))
+                .filter(p -> p.getZone().hasUndestroyedShips())
                 .flatMap(p -> p.getZone().getCoordinates().stream())
                 .collect(Collectors.toSet());
     }
