@@ -1,4 +1,4 @@
-# battleship-game
+## battleship-game
 
 Problem Statement
 Design and implement a battleship game to be played between two players until one comes out
@@ -66,7 +66,9 @@ B-SH2 and so on.
 Note: It should mark all the grids occupied by a ship and not just the center
 coordinate.
 
+# High Level Code Flow
 
+```mermaid
 flowchart TD
     %% External
     Console["Console / User"]:::external
@@ -204,3 +206,4 @@ flowchart TD
     BR --> PLR
     IMR --> GSR
     GSR --> GSMM
+```
