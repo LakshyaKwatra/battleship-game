@@ -4,15 +4,13 @@ import game.battleship.strategy.firing.FiringStrategy;
 
 public class Player {
     private final String id;
-    private final String name;
-    private Zone zone;
     private final FiringStrategy firingStrategy;
+    private final PlayerConfig playerConfig;
 
 
-    public Player(String id, String name, Zone zone, FiringStrategy firingStrategy) {
+    public Player(String id, PlayerConfig playerConfig, FiringStrategy firingStrategy) {
         this.id = id;
-        this.name = name;
-        this.zone = zone;
+        this.playerConfig = playerConfig;
         this.firingStrategy = firingStrategy;
     }
 
@@ -21,19 +19,15 @@ public class Player {
     }
 
     public String getName() {
-        return name;
-    }
-
-    public Zone getZone() {
-        return zone;
-    }
-
-    public void setZone(Zone zone) {
-        this.zone = zone;
+        return playerConfig.getName();
     }
 
     public FiringStrategy getFiringStrategy() {
         return firingStrategy;
+    }
+
+    public PlayerConfig getPlayerConfig() {
+        return playerConfig;
     }
 
 }

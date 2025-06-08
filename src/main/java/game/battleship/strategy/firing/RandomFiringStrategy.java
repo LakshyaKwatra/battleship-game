@@ -3,9 +3,11 @@ package game.battleship.strategy.firing;
 import game.battleship.core.GameSession;
 import game.battleship.model.Coordinate;
 import game.battleship.model.Player;
+import game.battleship.model.Zone;
 import game.battleship.util.CoordinateUtils;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
@@ -13,12 +15,11 @@ public class RandomFiringStrategy implements FiringStrategy {
     private final Random random = new Random();
 
     @Override
-    public Coordinate chooseTarget(Player player, GameSession gameSession, Set<Coordinate> firedCoordinates) {
+    public Coordinate chooseTarget(Player player, Map<Player, Zone> playerZoneMap) {
 
 
-        List<Coordinate> possibleTargets = CoordinateUtils.getOpponentZoneCoordinates(player, gameSession.getPlayers())
+        List<Coordinate> possibleTargets = CoordinateUtils.getValidOpponentZoneCoordinates(player, playerZoneMap)
                 .stream()
-                .filter(coordinate -> !firedCoordinates.contains(coordinate))
                 .toList();
 
         if (possibleTargets.isEmpty()) {
@@ -27,11 +28,11 @@ public class RandomFiringStrategy implements FiringStrategy {
 
         Coordinate target = possibleTargets.get(random.nextInt(possibleTargets.size()));
         try {
-            Thread.sleep(2000);
+            Thread.sleep(0);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(player.getName() + " fires at " + target);
+
         return target;
 
     }

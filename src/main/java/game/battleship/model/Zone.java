@@ -6,15 +6,19 @@ public class Zone {
     private final int startX;
     private final int endX;
     private final int height;
-    private final int width;
+    private final Player player;
+    private final Map<Coordinate, Ship> coordinateShipMap = new HashMap<>();
     private final Map<Coordinate, Cell> cellsMap = new HashMap<>();
     private final List<Ship> ships = new ArrayList<>();
 
-    public Zone(int height, int startX, int endX) {
+    private int numberOfAliveShips = 0;
+    private boolean isDefeated = false;
+
+    public Zone(int height, int startX, int endX, Player player) {
         this.height = height;
         this.startX = startX;
         this.endX = endX;
-        this.width = endX - startX + 1;
+        this.player = player;
         initializeCells();
     }
 
@@ -26,10 +30,6 @@ public class Zone {
         return endX;
     }
 
-    public int getWidth() {
-        return width;
-    }
-
     public Cell getCell(Coordinate coordinate) {
         return cellsMap.get(coordinate);
     }
@@ -39,24 +39,28 @@ public class Zone {
     }
 
     public List<Cell> getCells() {
-        return cellsMap.values().stream().toList();
+        return new ArrayList<>(cellsMap.values());
+    }
+
+    public boolean isDefeated() {
+        return isDefeated;
     }
 
 
-
-    public Ship getShip(Coordinate coordinate) {
-        for (Ship ship : ships) {
-            if (ship.containsCoordinate(coordinate)) return ship;
-        }
-        return null;
+    public Ship getShipAt(Coordinate coordinate) {
+        return coordinateShipMap.get(coordinate);
     }
 
     public List<Ship> getShips() {
-        return ships;
+        return Collections.unmodifiableList(ships);
     }
 
     public void addShip(Ship ship) {
         ships.add(ship);
+        numberOfAliveShips++;
+        for (Coordinate coordinate : ship.getCoordinates()) {
+            coordinateShipMap.put(coordinate, ship);
+        }
     }
 
     public boolean containsCoordinate(Coordinate coordinate) {
@@ -64,21 +68,15 @@ public class Zone {
     }
 
     public Set<Coordinate> getCoordinates() {
-        return cellsMap.keySet();
-    }
-
-    public boolean hasUndestroyedShips() {
-        return ships.stream().anyMatch(ship -> !ship.isDestroyed());
+        return Collections.unmodifiableSet(cellsMap.keySet());
     }
 
     public boolean overlapsWithExistingShips(Set<Coordinate> newCoordinates) {
-        return ships.stream()
-                .anyMatch(existingShip -> existingShip.getCoordinates().stream().anyMatch(newCoordinates::contains));
+        return newCoordinates.stream().anyMatch(coordinateShipMap::containsKey);
     }
 
     public boolean overlapsWithExistingShips(Coordinate newCoordinate) {
-        return ships.stream()
-                .anyMatch(existingShip -> existingShip.getCoordinates().contains(newCoordinate));
+        return coordinateShipMap.containsKey(newCoordinate);
     }
 
     private void initializeCells() {
@@ -90,4 +88,21 @@ public class Zone {
         }
     }
 
+    public int getNumberOfAliveShips() {
+        return numberOfAliveShips;
+    }
+
+    public void destroyShip(Ship ship) {
+        if (ships.contains(ship) && ship.isAlive()) {
+            ship.destroy();
+            numberOfAliveShips = Math.max(0, numberOfAliveShips - 1);
+            if(numberOfAliveShips == 0) {
+                isDefeated = true;
+            }
+        }
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
 }

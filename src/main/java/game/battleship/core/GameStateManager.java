@@ -2,45 +2,43 @@ package game.battleship.core;
 
 import game.battleship.enums.GameState;
 import game.battleship.model.Player;
+import game.battleship.model.Zone;
+import game.battleship.ui.GameTextRenderer;
 
-import java.util.List;
+import java.util.Map;
 
 public class GameStateManager {
     private GameState state = GameState.INITIALIZED;
     private Player winner = null;
+    private final Map<Player, Zone> playerZoneMap;
+
+    public GameStateManager(Map<Player, Zone> playerZoneMap) {
+        this.playerZoneMap = playerZoneMap;
+    }
 
     public boolean startGame() {
+        if (state == GameState.READY_TO_PLAY) {
+            state = GameState.IN_PROGRESS;
+            GameTextRenderer.printGameTitle();
+            return true;
+        }
+
         switch (state) {
-            case READY_TO_PLAY:
-                state = GameState.IN_PROGRESS;
-                System.out.println("Game started.");
-                return true;
-
-            case INITIALIZED:
-                System.out.println("Please add ships to start playing.");
-                break;
-
-            case IN_PROGRESS:
-                System.out.println("Game is already in progress.");
-                break;
-
-            case ENDED:
-                System.out.println("Game has already ended.");
-                break;
-
-            default:
-                System.out.println("Unknown game state.");
+            case INITIALIZED -> System.out.println("Please add ships to start playing.");
+            case IN_PROGRESS -> System.out.println("Game is already in progress.");
+            case ENDED -> System.out.println("Game has already ended.");
+            default -> System.out.println("Unknown game state.");
         }
         return false;
     }
 
-    public void evaluateGameState(List<Player> players) {
+    public void evaluateGameState() {
         int aliveCount = 0;
         Player lastAlive = null;
 
-        for (Player player : players) {
-            boolean hasUndestroyedShips = player.getZone().hasUndestroyedShips();
-            if (hasUndestroyedShips) {
+        for (Player player : playerZoneMap.keySet()) {
+            Zone zone = playerZoneMap.get(player);
+            if (zone != null && !zone.isDefeated()) {
                 aliveCount++;
                 lastAlive = player;
             }
@@ -57,6 +55,7 @@ public class GameStateManager {
             winner = null;
         }
     }
+
 
     public boolean isGameEnded() {
         return state == GameState.ENDED;
@@ -76,10 +75,9 @@ public class GameStateManager {
 
     public boolean canAddShip() {
         boolean canAddShip = state == GameState.INITIALIZED || state == GameState.READY_TO_PLAY;
-        if(!canAddShip) {
+        if (!canAddShip) {
             System.out.println("Ship can only be added if game is initialized or ready to play");
-            return false;
         }
-        return true;
+        return canAddShip;
     }
 }

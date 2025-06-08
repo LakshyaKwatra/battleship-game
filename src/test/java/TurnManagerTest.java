@@ -1,83 +1,59 @@
 import game.battleship.core.TurnManager;
 import game.battleship.model.Player;
-import game.battleship.model.Zone;
+import game.battleship.model.PlayerConfig;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-public class TurnManagerTest {
+class TurnManagerTest {
 
-    private Player p1;
-    private Player p2;
-    private Player p3;
+    private Player player1;
+    private Player player2;
+    private Player player3;
     private TurnManager turnManager;
 
     @BeforeEach
-    void setUp() {
-        p1 = mock(Player.class);
-        p2 = mock(Player.class);
-        p3 = mock(Player.class);
-
-        Zone z1 = mock(Zone.class);
-        Zone z2 = mock(Zone.class);
-        Zone z3 = mock(Zone.class);
-
-        when(p1.getZone()).thenReturn(z1);
-        when(p2.getZone()).thenReturn(z2);
-        when(p3.getZone()).thenReturn(z3);
-
-        // Initially, all players are alive
-        when(z1.hasUndestroyedShips()).thenReturn(true);
-        when(z2.hasUndestroyedShips()).thenReturn(true);
-        when(z3.hasUndestroyedShips()).thenReturn(true);
-
-        turnManager = new TurnManager(List.of(p1, p2, p3));
+    void setup() {
+        player1 = new Player("p1", new PlayerConfig("Alice", null), null);
+        player2 = new Player("p2", new PlayerConfig("Bob", null), null);
+        player3 = new Player("p3", new PlayerConfig("Charlie", null), null);
+        turnManager = new TurnManager(List.of(player1, player2, player3));
     }
 
     @Test
-    void testGetCurrentPlayerInitially() {
-        assertEquals(p1, turnManager.getCurrentPlayer());
+    void testInitialCurrentPlayer() {
+        assertEquals(player1, turnManager.getCurrentPlayer(), "Initial player should be the first in the list");
     }
 
     @Test
-    void testMoveToNextPlayer() {
+    void testMoveToNextPlayerOnce() {
         turnManager.moveToNextPlayer();
-        assertEquals(p2, turnManager.getCurrentPlayer());
-
-        turnManager.moveToNextPlayer();
-        assertEquals(p3, turnManager.getCurrentPlayer());
-
-        turnManager.moveToNextPlayer(); // wraps around
-        assertEquals(p1, turnManager.getCurrentPlayer());
+        assertEquals(player2, turnManager.getCurrentPlayer(), "After one move, current player should be the second");
     }
 
     @Test
-    void testSkipsDestroyedPlayers() {
-        // Only p1 and p3 are alive
-        when(p2.getZone().hasUndestroyedShips()).thenReturn(false);
-
-        turnManager.moveToNextPlayer();
-        assertEquals(p3, turnManager.getCurrentPlayer());
-
-        turnManager.moveToNextPlayer();
-        assertEquals(p1, turnManager.getCurrentPlayer());
+    void testMoveToNextPlayerTwice() {
+        turnManager.moveToNextPlayer(); // to player2
+        turnManager.moveToNextPlayer(); // to player3
+        assertEquals(player3, turnManager.getCurrentPlayer(), "After two moves, current player should be the third");
     }
 
     @Test
-    void testOnlyOnePlayerAlive() {
-        when(p1.getZone().hasUndestroyedShips()).thenReturn(true);
-        when(p2.getZone().hasUndestroyedShips()).thenReturn(false);
-        when(p3.getZone().hasUndestroyedShips()).thenReturn(false);
-
-        turnManager.moveToNextPlayer();
-        assertEquals(p1, turnManager.getCurrentPlayer());
-
-        turnManager.moveToNextPlayer();
-        assertEquals(p1, turnManager.getCurrentPlayer());
+    void testTurnWrapsAround() {
+        turnManager.moveToNextPlayer(); // player2
+        turnManager.moveToNextPlayer(); // player3
+        turnManager.moveToNextPlayer(); // wraps to player1
+        assertEquals(player1, turnManager.getCurrentPlayer(), "Turn should wrap around to the first player");
     }
 
+    @Test
+    void testMultipleCycles() {
+        for (int i = 0; i < 6; i++) {
+            turnManager.moveToNextPlayer();
+        }
+        assertEquals(player1, turnManager.getCurrentPlayer(), "After full cycles, current player should be correct");
+    }
 }

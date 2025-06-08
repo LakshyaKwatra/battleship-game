@@ -1,18 +1,18 @@
 package game.battleship.strategy.visibility;
 
+import game.battleship.enums.CellViewType;
 import game.battleship.model.Cell;
 import game.battleship.model.Coordinate;
 import game.battleship.model.Player;
-import game.battleship.model.Ship;
 
-public class FullVisibilityStrategy implements BattlefieldVisibilityStrategy {
+public class FullVisibilityStrategy implements GameVisibilityStrategy {
 
     @Override
-    public String getSymbol(Cell cell, Player cellOwner, Player viewingPlayer, Coordinate coordinate) {
-        Ship ship = cellOwner.getZone().getShip(coordinate);
-        if (cell.isDestroyed()) return "X  ";
-        if (cell.isFired()) return "O  ";
-        if (cell.isOccupied()) return ship.getId();
-        return ".  ";
+    public CellViewType getSymbol(Cell cell, String shipId, Player cellOwner, Player viewingPlayer) {
+        if (cell == null) return CellViewType.EMPTY;
+        if (cell.isDestroyed()) return CellViewType.DESTROYED;
+        if (cell.isFired()) return CellViewType.FIRED;
+        if (shipId != null) return CellViewType.SHIP;
+        return CellViewType.EMPTY;
     }
 }

@@ -1,15 +1,12 @@
 package game.battleship.service;
 
-import game.battleship.repository.GameSessionRepository;
+import game.battleship.enums.GameVisibilityMode;
+import game.battleship.model.*;
 import game.battleship.repository.InMemoryGameSessionRepository;
-import game.battleship.ui.BattlefieldDisplay;
 import game.battleship.core.GameSessionManager;
 import game.battleship.enums.FiringStrategyType;
-import game.battleship.enums.GameMode;
 import game.battleship.factory.GameSessionFactory;
-import game.battleship.model.Coordinate;
 import game.battleship.core.GameSession;
-import game.battleship.model.PlayerConfig;
 
 import java.util.*;
 
@@ -22,18 +19,18 @@ public class GameService {
         this.sessionManager = new GameSessionManager(new InMemoryGameSessionRepository());
     }
 
-    public String initGame(int battlefieldSize, List<PlayerConfig> playerConfigs) {
+    public String initGame(int battlefieldSize, List<PlayerConfig> playerConfigs, GameVisibilityMode gameVisibilityMode) {
         String sessionId = UUID.randomUUID().toString();
         if(battlefieldSize < playerConfigs.size()) {
             System.out.println("You need to have a bigger battlefield");
             return null;
         }
-        GameSession session = gameSessionFactory.createGameSession(sessionId, battlefieldSize, playerConfigs);
+        GameSession session = gameSessionFactory.createGameSession(sessionId, battlefieldSize, playerConfigs, gameVisibilityMode);
         sessionManager.saveSession(session);
         return sessionId;
     }
 
-    public String initBotGame(int battlefieldSize, int numberOfPlayers) {
+    public String initBotGame(int battlefieldSize, int numberOfPlayers, GameVisibilityMode gameVisibilityMode) {
         if(battlefieldSize < numberOfPlayers) {
             System.out.println("You need to have a bigger battlefield");
             return null;
@@ -42,7 +39,8 @@ public class GameService {
         GameSession session = gameSessionFactory.createBotGameSession(sessionId,
                 battlefieldSize,
                 numberOfPlayers,
-                FiringStrategyType.RANDOM);
+                FiringStrategyType.RANDOMIZED_BOT,
+                gameVisibilityMode);
         sessionManager.saveSession(session);
         return sessionId;
     }
@@ -71,15 +69,25 @@ public class GameService {
             return;
         }
 
-        BattlefieldDisplay.printBoard(gameSession);
+        gameSession.viewBattleField();
     }
 
-    public void setGameMode(String sessionId, GameMode gameMode) {
+    public void addBotShipsToAllPlayers(String sessionId, int numberOfShips) {
         GameSession gameSession = sessionManager.getValidatedSession(sessionId);
         if(gameSession == null) {
             return;
         }
-        gameSession.setGameMode(gameMode);
+        gameSession.addBotShipsToAllPlayers(numberOfShips);
+    }
+
+    public void simulateBotGame(int battlefieldSize, int numberOfPlayers, int numberOfShips, GameVisibilityMode gameVisibilityMode) {
+        String sessionId = initBotGame(battlefieldSize, numberOfPlayers, gameVisibilityMode);
+        GameSession gameSession = sessionManager.getValidatedSession(sessionId);
+        if(gameSession == null) {
+            return;
+        }
+        gameSession.addBotShipsToAllPlayers(numberOfShips);
+        gameSession.start();
     }
 
 

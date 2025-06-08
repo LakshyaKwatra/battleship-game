@@ -1,92 +1,98 @@
-import game.battleship.core.FleetManager;
-import game.battleship.model.Coordinate;
-import game.battleship.model.Player;
-import game.battleship.model.ValidationResult;
-import game.battleship.model.Zone;
-import game.battleship.util.FleetInputValidator;
+package game.battleship.core.action;
+
+import game.battleship.model.*;
+import game.battleship.util.CoordinateUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.mockStatic;
 
-public class FleetManagerTest {
+class FleetManagerTest {
 
-    private FleetManager fleetManager;
     private Player player1;
     private Player player2;
     private Zone zone1;
     private Zone zone2;
+    private Map<Player, Zone> playerZoneMap;
+    private FleetManager fleetManager;
+
+    private final int battlefieldSize = 10;
 
     @BeforeEach
     void setup() {
-        fleetManager = new FleetManager();
-        zone1 = new Zone(10, 0, 4);
-        zone2 = new Zone(10, 5, 9);
+        player1 = new Player("p1", new PlayerConfig("Lakshya", null), null);
+        player2 = new Player("p2", new PlayerConfig("Priya", null), null);
 
-        player1 = new Player("P1", "Lakshya", zone1, null);
-        player2 = new Player("P2", "Priya", zone2, null);
+        zone1 = new Zone(battlefieldSize, 0, battlefieldSize/2 - 1, player1);
+        zone2 = new Zone(battlefieldSize, battlefieldSize/2, battlefieldSize - 1, player2);
+
+        playerZoneMap = new HashMap<>();
+        playerZoneMap.put(player1, zone1);
+        playerZoneMap.put(player2, zone2);
+
+        fleetManager = new FleetManager(playerZoneMap, List.of(player1, player2), battlefieldSize);
     }
 
     @Test
-    void testAddSquareShipToAllPlayers_successful() {
-        // For 2x2 ships, choose top-left corners such that full square fits
-        Coordinate topLeft1 = new Coordinate(2, 2); // Covers (2,2),(2,3),(3,2),(3,3)
-        Coordinate topLeft2 = new Coordinate(5, 6); // Covers (5,6),(5,7),(6,6),(6,7)
+    void testAddShipToAllZones_success() {
+        String shipId = "S1";
+        int shipSize = 2;
+        System.out.println(zone2.getEndX());
 
+        Coordinate topLeft1 = new Coordinate(0, 0);
+        Coordinate topLeft2 = new Coordinate(5, 1);
+        Set<Coordinate> coords1 = CoordinateUtils.generateShipCoordinates(topLeft1, shipSize);
+        Set<Coordinate> coords2 = CoordinateUtils.generateShipCoordinates(topLeft2, shipSize);
         List<Coordinate> topLefts = List.of(topLeft1, topLeft2);
-        List<Player> players = List.of(player1, player2);
 
-        boolean result = fleetManager.addShipToAllPlayers("S1", 2, topLefts, players, 10);
-
+        boolean result = fleetManager.addShipToAllZones(shipId, shipSize, topLefts);
         assertTrue(result);
-        assertEquals(1, player1.getZone().getShips().size());
-        assertEquals(1, player2.getZone().getShips().size());
 
-        // Ensure all 4 cells in 2x2 square are marked as occupied
-        assertTrue(player1.getZone().getCell(new Coordinate(2, 2)).isOccupied());
-        assertTrue(player1.getZone().getCell(new Coordinate(2, 3)).isOccupied());
-        assertTrue(player1.getZone().getCell(new Coordinate(3, 2)).isOccupied());
-        assertTrue(player1.getZone().getCell(new Coordinate(3, 3)).isOccupied());
+        assertEquals(1, zone1.getShips().size());
+        assertEquals(1, zone2.getShips().size());
 
-        assertTrue(player2.getZone().getCell(new Coordinate(5, 6)).isOccupied());
-        assertTrue(player2.getZone().getCell(new Coordinate(5, 7)).isOccupied());
-        assertTrue(player2.getZone().getCell(new Coordinate(6, 6)).isOccupied());
-        assertTrue(player2.getZone().getCell(new Coordinate(6, 7)).isOccupied());
+        Ship ship1 = zone1.getShips().get(0);
+        Ship ship2 = zone2.getShips().get(0);
+
+        assertEquals(shipId, ship1.getId());
+        assertEquals(shipId, ship2.getId());
+
+        assertEquals(coords1, ship1.getCoordinates());
+        assertEquals(coords2, ship2.getCoordinates());
+        assertEquals(1, zone1.getShips().size());
+        assertEquals(1, zone2.getShips().size());
+
     }
 
     @Test
-    void testAddShipToAllPlayers_invalidCoordinatesSize() {
-        List<Coordinate> topLefts = List.of(new Coordinate(0, 1)); // Only one coordinate for two players
-        List<Player> players = List.of(player1, player2);
-
-        boolean result = fleetManager.addShipToAllPlayers("S1", 2, topLefts, players, 10);
+    void testAddShipToAllZones_failsDueToMismatchedCoordinates() {
+        boolean result = fleetManager.addShipToAllZones("S2", 3, List.of(new Coordinate(0, 0)));
         assertFalse(result);
-        assertEquals(0, player1.getZone().getShips().size());
-        assertEquals(0, player2.getZone().getShips().size());
+        assertTrue(zone1.getShips().isEmpty());
+        assertTrue(zone2.getShips().isEmpty());
     }
 
     @Test
-    void testAddShipToAllPlayers_validationFails() {
-        Coordinate topLeft1 = new Coordinate(0, 1);
-        Coordinate topLeft2 = new Coordinate(6, 6);
-        List<Coordinate> topLefts = List.of(topLeft1, topLeft2);
-        List<Player> players = List.of(player1, player2);
+    void testAddShipToAllZones_failsDueToOverlap() {
 
-        try (MockedStatic<FleetInputValidator> mockValidator = mockStatic(FleetInputValidator.class)) {
-            mockValidator.when(() ->
-                            FleetInputValidator.validate(anySet(), eq(10), any(Zone.class)))
-                    .thenReturn(ValidationResult.failure("Overlap"));
+        Coordinate existingTopLeft = new Coordinate(1, 1);
+        int shipSize = 2;
+        boolean result = fleetManager.addShipToAllZones("S3", shipSize, List.of(existingTopLeft, new Coordinate(5, 1)));
+        assertTrue (result);
+        assertEquals(1, zone1.getShips().size());
+        assertEquals(1, zone2.getShips().size());
 
-            boolean result = fleetManager.addShipToAllPlayers("S1", 2, topLefts, players, 10);
+        Coordinate overlapTopLeft = new Coordinate(2, 1); // overlaps with above
 
-            assertFalse(result);
-            assertEquals(0, player1.getZone().getShips().size());
-            assertEquals(0, player2.getZone().getShips().size());
-        }
+        result = fleetManager.addShipToAllZones("S4", shipSize,
+                List.of(overlapTopLeft, new Coordinate(4, 4)));
+        assertFalse(result);
+
+        // no ships should get added
+        assertEquals(1, zone1.getShips().size());
+        assertEquals(1, zone2.getShips().size());
     }
 }
+

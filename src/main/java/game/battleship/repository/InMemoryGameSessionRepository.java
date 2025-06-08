@@ -17,6 +17,9 @@ public class InMemoryGameSessionRepository implements GameSessionRepository {
 
     @Override
     public GameSession findById(String sessionId) {
+        if(sessionId == null) {
+            return null;
+        }
         return sessions.get(sessionId);
     }
 

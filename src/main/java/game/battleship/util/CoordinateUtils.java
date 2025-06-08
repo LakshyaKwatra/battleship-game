@@ -1,22 +1,18 @@
 package game.battleship.util;
 
+import game.battleship.exception.InvalidInputException;
 import game.battleship.model.Coordinate;
 import game.battleship.model.Player;
+import game.battleship.model.Zone;
+import game.battleship.ui.GameTextRenderer;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class CoordinateUtils {
 
     public static boolean isOutOfBounds(Coordinate coordinate, int battlefieldSize) {
         return coordinate.x < 0 || coordinate.x >= battlefieldSize || coordinate.y < 0 || coordinate.y >= battlefieldSize;
-    }
-
-    public static boolean isOutOfBounds(int x, int y, int battlefieldSize) {
-        return x < 0 || x >= battlefieldSize || y < 0 || y >= battlefieldSize;
     }
 
     public static Set<Coordinate> generateShipCoordinates(Coordinate topLeft, int shipSize) {
@@ -29,17 +25,19 @@ public class CoordinateUtils {
         return coordinates;
     }
 
-    public static Set<Coordinate> getOpponentZoneCoordinates(Player shooter, List<Player> allPlayers) {
-        return allPlayers.stream()
-                .filter(p -> !p.getId().equals(shooter.getId()))
-                .filter(p -> p.getZone().hasUndestroyedShips())
-                .flatMap(p -> p.getZone().getCoordinates().stream())
+    public static Set<Coordinate> getValidOpponentZoneCoordinates(Player shooter, Map<Player, Zone> playerZoneMap) {
+        return playerZoneMap.entrySet().stream()
+                .filter(entry -> !entry.getKey().getId().equals(shooter.getId()))
+                .filter(entry -> !entry.getValue().isDefeated())
+                .flatMap(entry -> entry.getValue().getCoordinates().stream()
+                        .filter(coordinate -> !entry.getValue().getCell(coordinate).isDestroyed() &&
+                                !entry.getValue().getCell(coordinate).isFired()))
                 .collect(Collectors.toSet());
     }
 
     public static List<Coordinate> fromInts(int... topLeftCoordinates) {
         if (topLeftCoordinates.length % 2 != 0) {
-            throw new IllegalArgumentException("Number of integers must be even (pairs of x and y).");
+            GameTextRenderer.printErrorMessage("Number of integers must be even (pairs of x and y).");
         }
 
         List<Coordinate> coordinates = new ArrayList<>();
@@ -47,5 +45,19 @@ public class CoordinateUtils {
             coordinates.add(new Coordinate(topLeftCoordinates[i], topLeftCoordinates[i + 1]));
         }
         return coordinates;
+    }
+
+    public static Coordinate parseCoordinate(String input) throws InvalidInputException {
+        String[] parts = input.trim().split("\\s+");
+        if (parts.length != 2) {
+            throw new InvalidInputException("Expected exactly two integers separated by space.");
+        }
+        try {
+            int x = Integer.parseInt(parts[0]);
+            int y = Integer.parseInt(parts[1]);
+            return new Coordinate(x, y);
+        } catch (NumberFormatException e) {
+            throw new InvalidInputException("Invalid number format.");
+        }
     }
 }

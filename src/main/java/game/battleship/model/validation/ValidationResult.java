@@ -1,4 +1,4 @@
-package game.battleship.model;
+package game.battleship.model.validation;
 
 public class ValidationResult {
     private final boolean valid;

@@ -12,7 +12,7 @@ public class FiringStrategyFactory {
         switch (strategyType) {
             case HUMAN:
                 return new HumanFiringStrategy(scanner);
-            case RANDOM:
+            case RANDOMIZED_BOT:
                 return new RandomFiringStrategy();
             default:
                 throw new IllegalArgumentException("Unknown strategy type: " + strategyType);

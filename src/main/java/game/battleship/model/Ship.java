@@ -1,21 +1,21 @@
 package game.battleship.model;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 
 public class Ship {
     private final String id;
     private final int size;
-    private final Map<Coordinate, Cell> cells = new HashMap<>();
-    private boolean destroyed;
+    private final Set<Coordinate> occupiedCoordinates;
+    private final Zone zone;
+    private boolean isAlive;
 
-    public Ship(String id, int size, Set<Coordinate> coordinates, Zone zone) {
+    public Ship(String id, int size, Set<Coordinate> occupiedCoordinates, Zone zone) {
         this.id = id;
         this.size = size;
-        this.destroyed = false;
-
-        initialize(coordinates, zone);
+        this.isAlive = true;
+        this.zone = zone;
+        this.occupiedCoordinates = occupiedCoordinates;
+        initialize();
     }
 
     public String getId() {
@@ -26,33 +26,41 @@ public class Ship {
         return size;
     }
 
+
     public Set<Coordinate> getCoordinates() {
-        return cells.keySet();
+        return occupiedCoordinates;
     }
 
     public boolean containsCoordinate(Coordinate coordinate) {
-        return cells.containsKey(coordinate);
+        return occupiedCoordinates.contains(coordinate);
     }
 
-    public boolean isDestroyed() {
-        return destroyed;
+    public boolean isAlive() {
+        return isAlive;
     }
 
     public void destroy() {
-        cells.values().forEach(Cell::markDestroyed);
-        this.destroyed = true;
+        for (Coordinate coordinate: occupiedCoordinates) {
+            zone.getCell(coordinate).markDestroyed();
+        }
+        this.isAlive = false;
     }
 
-    private void initialize(Set<Coordinate> coordinates, Zone zone) {
-        for (Coordinate coordinate : coordinates) {
+    private void initialize() {
+        for (Coordinate coordinate : occupiedCoordinates) {
             Cell cell = zone.getCell(coordinate);
             if (cell == null) {
                 throw new IllegalArgumentException("Invalid coordinate for ship: " + coordinate);
             }
-
             cell.markOccupied();
-            this.cells.put(coordinate, cell);
         }
     }
 
+    public Zone getZone() {
+        return zone;
+    }
+
+    public Player getOwner() {
+        return zone.getPlayer();
+    }
 }

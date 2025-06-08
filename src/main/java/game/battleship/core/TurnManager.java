@@ -17,8 +17,6 @@ public class TurnManager {
     }
 
     public void moveToNextPlayer() {
-        do {
-            currentIndex = (currentIndex + 1) % players.size();
-        } while (!players.get(currentIndex).getZone().hasUndestroyedShips());
+        currentIndex = (currentIndex + 1) % players.size();
     }
 }

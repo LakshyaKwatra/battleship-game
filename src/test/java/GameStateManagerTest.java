@@ -1,93 +1,133 @@
 import game.battleship.core.GameStateManager;
+import game.battleship.core.action.FleetManager;
 import game.battleship.enums.GameState;
+import game.battleship.model.Coordinate;
 import game.battleship.model.Player;
+import game.battleship.model.PlayerConfig;
 import game.battleship.model.Zone;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
 
-public class GameStateManagerTest {
+class GameStateManagerTest {
 
-    private GameStateManager gameStateManager;
+    private Player player1;
+    private Player player2;
+    private Zone zone1;
+    private Zone zone2;
+    private Map<Player, Zone> playerZoneMap;
+    private GameStateManager manager;
+    private FleetManager fleetManager;
 
     @BeforeEach
-    void setUp() {
-        gameStateManager = new GameStateManager();
+    void setup() {
+        player1 = new Player("p1", new PlayerConfig("Lakshya", null), null);
+        player2 = new Player("p2", new PlayerConfig("Angel", null), null);
+
+        int battlefieldSize = 10;
+
+        zone1 = new Zone(battlefieldSize, 0, 4, player1);
+        zone2 = new Zone(battlefieldSize, 5, 9, player2);
+
+        playerZoneMap = new HashMap<>();
+        playerZoneMap.put(player1, zone1);
+        playerZoneMap.put(player2, zone2);
+
+        manager = new GameStateManager(playerZoneMap);
+        fleetManager = new FleetManager(playerZoneMap, List.of(player1, player2), battlefieldSize);
     }
 
     @Test
-    void testStartGameOnlyWhenReadyToPlay() {
-        assertEquals(GameState.INITIALIZED, gameStateManager.getGameState());
-        assertFalse(gameStateManager.startGame());
+    void testStartGame_successWhenReadyToPlay() {
+        manager.setGameState(GameState.READY_TO_PLAY);
 
-        gameStateManager.setGameState(GameState.READY_TO_PLAY);
-        assertTrue(gameStateManager.startGame());
-        assertEquals(GameState.IN_PROGRESS, gameStateManager.getGameState());
+        boolean started = manager.startGame();
 
-        gameStateManager.setGameState(GameState.ENDED);
-        assertFalse(gameStateManager.startGame());
+        assertTrue(started);
+        assertEquals(GameState.IN_PROGRESS, manager.getGameState());
     }
 
     @Test
-    void testEvaluateGameState_AllPlayersAlive() {
-        Player p1 = mock(Player.class);
-        Player p2 = mock(Player.class);
-        when(p1.getZone()).thenReturn(mock(Zone.class));
-        when(p2.getZone()).thenReturn(mock(Zone.class));
-        when(p1.getZone().hasUndestroyedShips()).thenReturn(true);
-        when(p2.getZone().hasUndestroyedShips()).thenReturn(true);
+    void testStartGame_failsWhenNotReady() {
+        manager.setGameState(GameState.INITIALIZED);
 
-        gameStateManager.evaluateGameState(List.of(p1, p2));
-        assertEquals(GameState.IN_PROGRESS, gameStateManager.getGameState());
-        assertNull(gameStateManager.getWinner());
+        boolean started = manager.startGame();
+
+        assertFalse(started);
+        assertEquals(GameState.INITIALIZED, manager.getGameState());
     }
 
     @Test
-    void testEvaluateGameState_OnePlayerAlive() {
-        Player alive = mock(Player.class);
-        Player dead = mock(Player.class);
-        when(alive.getZone()).thenReturn(mock(Zone.class));
-        when(dead.getZone()).thenReturn(mock(Zone.class));
-        when(alive.getZone().hasUndestroyedShips()).thenReturn(true);
-        when(dead.getZone().hasUndestroyedShips()).thenReturn(false);
+    void testEvaluateGameState_onlyOneAlive_shouldEndGameAndSetWinner() {
+        int shipSize = 2;
+        fleetManager.addShipToAllZones("ship1", shipSize, List.of(new Coordinate(1,1), new Coordinate(5, 5)));
+        assertEquals(1, zone1.getShips().size());
+        assertEquals(1, zone2.getShips().size());
+        assertTrue(zone1.getShips().get(0).isAlive());
+        assertTrue(zone2.getShips().get(0).isAlive());
 
-        gameStateManager.evaluateGameState(List.of(alive, dead));
-        assertEquals(GameState.ENDED, gameStateManager.getGameState());
-        assertEquals(alive, gameStateManager.getWinner());
+        zone1.destroyShip(zone1.getShips().get(0));
+
+        assertFalse(zone1.getShips().get(0).isAlive());
+        assertTrue(zone2.getShips().get(0).isAlive());
+
+        manager.evaluateGameState();
+
+        assertTrue(manager.isGameEnded());
+        assertEquals(GameState.ENDED, manager.getGameState());
+        assertEquals(player2, manager.getWinner());
     }
 
     @Test
-    void testEvaluateGameState_NoPlayersAlive_Draw() {
-        Player p1 = mock(Player.class);
-        Player p2 = mock(Player.class);
-        when(p1.getZone()).thenReturn(mock(Zone.class));
-        when(p2.getZone()).thenReturn(mock(Zone.class));
-        when(p1.getZone().hasUndestroyedShips()).thenReturn(false);
-        when(p2.getZone().hasUndestroyedShips()).thenReturn(false);
+    void testEvaluateGameState_drawCondition() {
+        int shipSize = 2;
+        fleetManager.addShipToAllZones("ship1", shipSize, List.of(new Coordinate(1,1), new Coordinate(5, 5)));
+        assertEquals(1, zone1.getShips().size());
+        assertEquals(1, zone2.getShips().size());
+        assertTrue(zone1.getShips().get(0).isAlive());
+        assertTrue(zone2.getShips().get(0).isAlive());
 
-        gameStateManager.evaluateGameState(List.of(p1, p2));
-        assertEquals(GameState.ENDED, gameStateManager.getGameState());
-        assertNull(gameStateManager.getWinner());
+        zone1.destroyShip(zone1.getShips().get(0));
+        zone2.destroyShip(zone2.getShips().get(0));
+
+        assertFalse(zone1.getShips().get(0).isAlive());
+        assertFalse(zone2.getShips().get(0).isAlive());
+
+        manager.evaluateGameState();
+
+        assertTrue(manager.isGameEnded());
+        assertEquals(GameState.ENDED, manager.getGameState());
+        assertNull(manager.getWinner());
     }
 
     @Test
-    void testCanAddShip() {
-        gameStateManager.setGameState(GameState.INITIALIZED);
-        assertTrue(gameStateManager.canAddShip());
+    void testEvaluateGameState_multipleAlive_shouldNotEndGame() {
+        manager.evaluateGameState();
 
-        gameStateManager.setGameState(GameState.READY_TO_PLAY);
-        assertTrue(gameStateManager.canAddShip());
+        assertFalse(manager.isGameEnded());
+        assertEquals(GameState.IN_PROGRESS, manager.getGameState());
+        assertNull(manager.getWinner());
+    }
 
-        gameStateManager.setGameState(GameState.IN_PROGRESS);
-        assertFalse(gameStateManager.canAddShip());
+    @Test
+    void testCanAddShip_allowedStates() {
+        manager.setGameState(GameState.INITIALIZED);
+        assertTrue(manager.canAddShip());
 
-        gameStateManager.setGameState(GameState.ENDED);
-        assertFalse(gameStateManager.canAddShip());
+        manager.setGameState(GameState.READY_TO_PLAY);
+        assertTrue(manager.canAddShip());
+    }
+
+    @Test
+    void testCanAddShip_notAllowedStates() {
+        manager.setGameState(GameState.IN_PROGRESS);
+        assertFalse(manager.canAddShip());
+
+        manager.setGameState(GameState.ENDED);
+        assertFalse(manager.canAddShip());
     }
 
 }
-
