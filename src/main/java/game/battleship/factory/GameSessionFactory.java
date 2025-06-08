@@ -25,31 +25,8 @@ public class GameSessionFactory {
 
     public GameSession createGameSession(String sessionId, int battlefieldSize, List<PlayerConfig> playerConfigs, GameVisibilityMode gameVisibilityMode) {
         int numberOfPlayers = playerConfigs.size();
-        int zoneWidth = battlefieldSize / numberOfPlayers;
-
-//        List<Zone> zones = createZones(numberOfPlayers, zoneWidth, battlefieldSize);
         List<Player> players = PlayerFactory.createPlayers(numberOfPlayers, playerConfigs, scanner);
         return new GameSession(sessionId, battlefieldSize, players, gameVisibilityMode, new DefaultScoreStrategy());
     }
-
-//    private List<Zone> createZones(int numPlayers, int zoneWidth, int battlefieldSize) {
-//        List<Zone> zones = new ArrayList<>();
-//
-//        int baseZoneWidth = battlefieldSize / numPlayers;
-//        int remainder = battlefieldSize % numPlayers;
-//
-//        int currentStartX = 0;
-//
-//        for (int i = 0; i < numPlayers; i++) {
-//            int extra = (i < remainder) ? 1 : 0;  // Distribute remaining columns
-//            int currentWidth = baseZoneWidth + extra;
-//            int endX = currentStartX + currentWidth - 1;
-//
-//            zones.add(new Zone(battlefieldSize, currentStartX, endX));
-//            currentStartX = endX + 1;
-//        }
-//
-//        return zones;
-//    }
 
 }

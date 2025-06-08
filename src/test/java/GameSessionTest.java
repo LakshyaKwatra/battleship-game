@@ -32,8 +32,8 @@ class GameSessionTest {
 
     @BeforeEach
     void setup() {
-        player1 = new Player("p1", new PlayerConfig("Alice", null), mock(FiringStrategy.class));
-        player2 = new Player("p2", new PlayerConfig("Bob", null), mock(FiringStrategy.class));
+        player1 = new Player("p1", new PlayerConfig("Lakshya", null), mock(FiringStrategy.class));
+        player2 = new Player("p2", new PlayerConfig("Angel", null), mock(FiringStrategy.class));
         players = List.of(player1, player2);
 
         scoreStrategy = mock(ScoreStrategy.class);

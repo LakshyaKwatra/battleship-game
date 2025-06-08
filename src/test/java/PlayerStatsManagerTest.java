@@ -21,8 +21,8 @@ class PlayerStatsManagerTest {
 
     @BeforeEach
     void setUp() {
-        player1 = new Player("p1", new PlayerConfig("Alice", null), null);
-        player2 = new Player("p2", new PlayerConfig("Bob", null), null);
+        player1 = new Player("p1", new PlayerConfig("Lakshya", null), null);
+        player2 = new Player("p2", new PlayerConfig("Priya", null), null);
 
         zone1 = mock(Zone.class);
         when(zone1.getNumberOfAliveShips()).thenReturn(3);

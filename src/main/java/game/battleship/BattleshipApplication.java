@@ -9,17 +9,9 @@ import java.util.List;
 
 public class BattleshipApplication {
     public static void main(String[] args) {
-//        GameService gameService = new GameService();
-//        String sessionId = gameService.initBotGame(8, 2, GameVisibilityMode.FULL_VISIBILITY);
-//        gameService.addShip(sessionId, "POING", 3, CoordinateUtils.fromInts(0, 0, 5, 1));
-//        gameService.addShip(sessionId, "TOING", 3, CoordinateUtils.fromInts(1, 4, 4, 4));
-
-//        gameService.viewBattlefield(sessionId);
-
-//        gameService.startGame(sessionId);
-//        multiplayerDemo();
-//        playerVsPlayerDemo();
-//        botsVsBotsDemo();
+        multiplayerDemo();
+        playerVsPlayerDemo();
+        botsVsBotsDemo();
         playerVsBotsDemo();
     }
 
