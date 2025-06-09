@@ -1,4 +1,4 @@
-package game.battleship.ui;
+package game.battleship.model;
 
 import game.battleship.enums.ConsoleBackgroundColor;
 import game.battleship.enums.ConsoleTextColor;

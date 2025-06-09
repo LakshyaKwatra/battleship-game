@@ -4,7 +4,7 @@ import game.battleship.enums.CellViewType;
 import game.battleship.enums.ConsoleBackgroundColor;
 import game.battleship.enums.ConsoleTextColor;
 import game.battleship.model.Cell;
-import game.battleship.ui.CellRenderInfo;
+import game.battleship.model.CellRenderInfo;
 import game.battleship.config.GameTheme;
 
 public class SymbolMapper {
